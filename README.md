@@ -84,6 +84,7 @@ scripts/selftest.mjs    端到端自测（含 zip / 几何单元测试）
 - **中文页码**：`pdf-lib` 内置字体不含中文，通过 `@pdf-lib/fontkit` 嵌入系统字体（simhei / simkai 等）。
 - **拼版旋转页**：PDF 的 `/Rotate` 是「顺时针显示」，而 pdf-lib 的 `rotate` 是逆时针，两者要换算；旋转后页面的实际占位宽高会交换，放置点也要跟着换算（见 `placeRotated`，有单元测试覆盖 0°/90°/270°）。
 - **打包**：`sharp` 是原生模块，需要在 `electron-builder.yml` 里 `asarUnpack` 出来才能加载。
+- **安装包文件名必须用 ASCII**：`electron-builder` 的 `artifactName` 会把非 ASCII 字符**静默删掉**，写成 `${productName}-${version}-安装包.${ext}` 最终会得到 `-0.2.1-.exe` 这种坏名字。中文只保留在 `productName` / `shortcutName`（应用显示名和快捷方式名）上。
 - **自测里读 .docx**：docx 是 zip，且写入器常使用 data descriptor（本地头里尺寸写 0），必须走**中央目录**才能拿到可信的压缩尺寸。
 
 ## 已知限制

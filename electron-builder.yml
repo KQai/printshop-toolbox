@@ -20,7 +20,9 @@ win:
     - target: nsis
       arch:
         - x64
-  artifactName: ${productName}-${version}-安装包.${ext}
+  # 必须是纯 ASCII：electron-builder 会把文件名里的非 ASCII 字符直接删掉，
+  # 用中文会得到「-0.2.0-.exe」这种坏名字
+  artifactName: printshop-toolbox-${version}-setup.${ext}
 
 nsis:
   oneClick: false
