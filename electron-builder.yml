@@ -1,6 +1,9 @@
 appId: com.printshop.toolbox
-productName: 文印工具箱
-copyright: Copyright © 2026
+# productName 必须是纯 ASCII：它决定安装目录（%LOCALAPPDATA%\Programs\<productName>）
+# 和主程序名（<productName>.exe）。写成中文会让安装路径出现中文，
+# 而 Office COM / LibreOffice / sharp 在中文路径下都可能出问题。
+productName: PrintshopToolbox
+copyright: Copyright (c) 2026
 
 directories:
   output: release
@@ -30,5 +33,6 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
+  # 快捷方式名只是桌面上显示的「标签」，不是路径，可以放心用中文
   shortcutName: 文印工具箱
   language: '2052' # 简体中文

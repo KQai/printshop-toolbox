@@ -29,14 +29,20 @@ npm run selftest     # 端到端自测，真实文件跑一遍全部转换
 npm run dist         # 打包成 Windows 安装包（输出到 release/）
 ```
 
-国内网络装依赖时，Electron / sharp 的二进制建议走镜像：
+国内网络装依赖 / 打包时，二进制建议走镜像：
 
 ```powershell
 $env:ELECTRON_MIRROR="https://npmmirror.com/mirrors/electron/"
 $env:SHARP_BINARY_HOST="https://npmmirror.com/mirrors/sharp"
 $env:SHARP_LIBVIPS_BINARY_HOST="https://npmmirror.com/mirrors/libvips"
 npm install
+
+# 打包时 electron-builder 还要额外下载 winCodeSign / nsis 等工具链
+$env:ELECTRON_BUILDER_BINARIES_MIRROR="https://npmmirror.com/mirrors/electron-builder-binaries/"
+npm run dist
 ```
+
+> 项目路径请放在**纯 ASCII 目录**下（例如 `D:\MyProjects\printshop-toolbox`），中文路径可能让打包失败。
 
 ## 转换引擎
 
@@ -84,7 +90,9 @@ scripts/selftest.mjs    端到端自测（含 zip / 几何单元测试）
 - **中文页码**：`pdf-lib` 内置字体不含中文，通过 `@pdf-lib/fontkit` 嵌入系统字体（simhei / simkai 等）。
 - **拼版旋转页**：PDF 的 `/Rotate` 是「顺时针显示」，而 pdf-lib 的 `rotate` 是逆时针，两者要换算；旋转后页面的实际占位宽高会交换，放置点也要跟着换算（见 `placeRotated`，有单元测试覆盖 0°/90°/270°）。
 - **打包**：`sharp` 是原生模块，需要在 `electron-builder.yml` 里 `asarUnpack` 出来才能加载。
-- **安装包文件名必须用 ASCII**：`electron-builder` 的 `artifactName` 会把非 ASCII 字符**静默删掉**，写成 `${productName}-${version}-安装包.${ext}` 最终会得到 `-0.2.1-.exe` 这种坏名字。中文只保留在 `productName` / `shortcutName`（应用显示名和快捷方式名）上。
+- **安装路径必须用 ASCII**：`productName` 决定安装目录（`%LOCALAPPDATA%\Programs\<productName>`）和主程序名（`<productName>.exe`）。写成中文会让安装路径出现中文，而 Office COM / LibreOffice / sharp 在中文路径下都可能出问题。所以 `productName` 固定用 `PrintshopToolbox`，中文只放在 `shortcutName`（那只是快捷方式上显示的标签，不是路径）。
+- **`artifactName` 会静默吃掉非 ASCII 字符**：它不是报错而是直接删除，写成 `${productName}-${version}-安装包.${ext}` 会得到 `-0.2.1-.exe` 这种坏名字。固定用 `printshop-toolbox-${version}-setup.${ext}`。
+- **项目路径不要含中文**：`npm run dist` 在中文路径下可能失败，建议放在纯 ASCII 目录下（例如 `D:\MyProjects\printshop-toolbox`）。
 - **自测里读 .docx**：docx 是 zip，且写入器常使用 data descriptor（本地头里尺寸写 0），必须走**中央目录**才能拿到可信的压缩尺寸。
 
 ## 已知限制

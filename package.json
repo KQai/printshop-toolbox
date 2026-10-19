@@ -1,6 +1,6 @@
 {
   "name": "printshop-toolbox",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "文印店批量文档工具箱 —— 本地处理，文件不上传",
   "main": "./out/main/index.js",
   "author": "KQai",
