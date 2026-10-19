@@ -44,6 +44,12 @@ npm run dist
 
 > 项目路径请放在**纯 ASCII 目录**下（例如 `D:\MyProjects\printshop-toolbox`），中文路径可能让打包失败。
 
+如果 `npm run dist` 报 `Cannot create symbolic link` / `cannot execute cause=exit status 2`，先跑一次修复脚本（原因见下方技术要点）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\fix-wincodesign-cache.ps1
+```
+
 ## 转换引擎
 
 | 功能 | 引擎 | 说明 |
@@ -93,6 +99,7 @@ scripts/selftest.mjs    端到端自测（含 zip / 几何单元测试）
 - **安装路径必须用 ASCII**：`productName` 决定安装目录（`%LOCALAPPDATA%\Programs\<productName>`）和主程序名（`<productName>.exe`）。写成中文会让安装路径出现中文，而 Office COM / LibreOffice / sharp 在中文路径下都可能出问题。所以 `productName` 固定用 `PrintshopToolbox`，中文只放在 `shortcutName`（那只是快捷方式上显示的标签，不是路径）。
 - **`artifactName` 会静默吃掉非 ASCII 字符**：它不是报错而是直接删除，写成 `${productName}-${version}-安装包.${ext}` 会得到 `-0.2.1-.exe` 这种坏名字。固定用 `printshop-toolbox-${version}-setup.${ext}`。
 - **项目路径不要含中文**：`npm run dist` 在中文路径下可能失败，建议放在纯 ASCII 目录下（例如 `D:\MyProjects\printshop-toolbox`）。
+- **Windows 本地打包会被 winCodeSign 的符号链接卡住**：该 7z 包里含 macOS 的符号链接，Windows 普通用户没权限创建，7-Zip 解压报 `Cannot create symbolic link` 并以退出码 2 结束，electron-builder 把这个当成 `cannot execute cause=exit status 2` 直接中止（报错完全看不出跟项目有关）。CI 因为是管理员所以没事。跑一次 `scripts/fix-wincodesign-cache.ps1` 手动把包解压进缓存即可绕过。
 - **自测里读 .docx**：docx 是 zip，且写入器常使用 data descriptor（本地头里尺寸写 0），必须走**中央目录**才能拿到可信的压缩尺寸。
 
 ## 已知限制
