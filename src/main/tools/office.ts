@@ -310,12 +310,12 @@ export async function wordToPdf(
   }
 }
 
-/** 用 LibreOffice 转成其它格式（保留给 PDF->Word 等场景） */
+/** 用 LibreOffice 转成其它格式（用于 PDF->Word 等场景） */
 export async function libreOfficeConvert(
   files: string[],
   targetExt: string,
   outDir: string
-): Promise<{ input: string; ok: boolean; message?: string }[]> {
+): Promise<{ input: string; output: string; ok: boolean; message?: string }[]> {
   const env = await detectEnvironment()
   if (!env.libreoffice) throw new Error('未安装 LibreOffice，无法使用该转换。')
   const taken = new Set<string>()
@@ -323,10 +323,12 @@ export async function libreOfficeConvert(
     input: f,
     output: outputPathFor(f, outDir, '.' + targetExt, taken)
   }))
-  const out: { input: string; ok: boolean; message?: string }[] = []
+  const out: { input: string; output: string; ok: boolean; message?: string }[] = []
   await convertWithLibreOffice(env.libreoffice, jobs, targetExt, {
     onItem: (input, ok, message) => {
-      if (input) out.push({ input, ok, message })
+      if (!input) return
+      const job = jobs.find((j) => j.input === input)
+      out.push({ input, output: job?.output ?? '', ok, message })
     }
   })
   return out

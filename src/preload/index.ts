@@ -3,10 +3,12 @@ import type {
   EnvCheck,
   ImageConvertArgs,
   ImagesToPdfArgs,
+  ImposeArgs,
   OpenDialogOptions,
   PdfMergeArgs,
   PdfPageNumberArgs,
   PdfSplitArgs,
+  PdfToWordArgs,
   ProgressEvent,
   TaskResult,
   WordToPdfArgs
@@ -64,6 +66,14 @@ const api = {
 
   pdfPageNumbers(args: PdfPageNumberArgs & { taskId: string }): Promise<TaskResult> {
     return ipcRenderer.invoke('task:pdfPageNumbers', args)
+  },
+
+  pdfToWord(args: PdfToWordArgs & { taskId: string }): Promise<TaskResult> {
+    return ipcRenderer.invoke('task:pdfToWord', args)
+  },
+
+  impose(args: ImposeArgs & { taskId: string }): Promise<TaskResult> {
+    return ipcRenderer.invoke('task:impose', args)
   },
 
   onProgress(cb: (p: ProgressEvent) => void): () => void {

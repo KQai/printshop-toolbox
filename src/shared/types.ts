@@ -95,3 +95,21 @@ export type PdfPageNumberArgs = {
   template: string
   margin: number
 }
+
+export type PdfToWordArgs = {
+  files: string[]
+  /** text = 内置文本提取（免依赖）；libreoffice = 尽量保版 */
+  engine: 'text' | 'libreoffice'
+  outDir: string | null
+}
+
+export type ImposeArgs = {
+  file: string
+  outDir: string | null
+  paper: 'a3' | 'a4'
+  perSheet: 2 | 4 | 8
+  order: 'sequential' | 'booklet'
+  marginMm: number
+  gapMm: number
+  cropMarks: boolean
+}

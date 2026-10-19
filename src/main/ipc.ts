@@ -5,18 +5,22 @@ import type {
   EnvCheck,
   ImageConvertArgs,
   ImagesToPdfArgs,
+  ImposeArgs,
   OpenDialogOptions,
   PdfMergeArgs,
   PdfPageNumberArgs,
   PdfSplitArgs,
+  PdfToWordArgs,
   ProgressEvent,
   TaskResult,
   WordToPdfArgs
 } from '../shared/types'
 import { defaultOutputDirFor, convertImages, imagesToSeparatePdfs, imagesToSinglePdf } from './tools/images'
+import { imposePdf } from './tools/impose'
 import { detectEnvironment, wordToPdf } from './tools/office'
 import { uniquePath } from './tools/paths'
 import { addPageNumbers, mergePdfs, splitPdf } from './tools/pdf'
+import { pdfToWord, CHARS_PER_PAGE_HINT } from './tools/pdf2word'
 
 function emit(event: Electron.IpcMainInvokeEvent, payload: ProgressEvent): void {
   const wc = event.sender
@@ -206,5 +210,84 @@ export function registerIpc(): void {
     }
 
     return { ok: errors.length === 0, succeeded, failed: errors.length, outputs, errors, outDir }
+  })
+
+  ipcMain.handle('task:pdfToWord', async (e, args: PdfToWordArgs & { taskId: string }): Promise<TaskResult> => {
+    const { taskId, files, engine, outDir } = args
+    const total = files.length
+    const errors: TaskResult['errors'] = []
+    const outputs: string[] = []
+    let succeeded = 0
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      try {
+        const res = await pdfToWord(file, outDir, engine)
+        outputs.push(res.output)
+        succeeded++
+        const note =
+          engine === 'text' && res.pages > 0 && res.chars / Math.max(1, res.pages) < CHARS_PER_PAGE_HINT
+            ? '这页几乎没有文字，可能是扫描件/图片型 PDF'
+            : undefined
+        emit(e, {
+          id: taskId,
+          done: i + 1,
+          total,
+          current: path.basename(file),
+          message: note
+        })
+        if (note) errors.push({ input: file, message: note })
+      } catch (err) {
+        errors.push({ input: file, message: errorText(err) })
+        emit(e, { id: taskId, done: i + 1, total, current: path.basename(file), message: errorText(err) })
+      }
+    }
+
+    return {
+      ok: succeeded > 0,
+      succeeded,
+      failed: total - succeeded,
+      outputs,
+      errors,
+      outDir: outDir ?? undefined
+    }
+  })
+
+  ipcMain.handle('task:impose', async (e, args: ImposeArgs & { taskId: string }): Promise<TaskResult> => {
+    const { taskId, file, outDir, paper, perSheet, order, marginMm, gapMm, cropMarks } = args
+    try {
+      emit(e, { id: taskId, done: 0, total: 1, current: path.basename(file) })
+      const dir = outDir ?? path.dirname(file)
+      await fs.mkdir(dir, { recursive: true })
+      const target = uniquePath(
+        path.join(dir, `${path.basename(file, path.extname(file))}_${paper.toUpperCase()}拼版.pdf`)
+      )
+      const res = await imposePdf(file, target, {
+        paper,
+        perSheet,
+        order,
+        marginMm,
+        gapMm,
+        cropMarks
+      })
+      emit(e, { id: taskId, done: 1, total: 1, current: path.basename(target) })
+      return {
+        ok: true,
+        succeeded: res.outputPages,
+        failed: 0,
+        outputs: [target],
+        errors: [],
+        outDir: dir
+      }
+    } catch (err) {
+      return {
+        ok: false,
+        succeeded: 0,
+        failed: 1,
+        outputs: [],
+        errors: [{ input: file, message: errorText(err) }],
+        outDir: outDir ?? undefined
+      }
+    }
   })
 }

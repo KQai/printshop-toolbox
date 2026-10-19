@@ -1,9 +1,11 @@
 import { useMemo, useState, type ComponentType } from 'react'
 import ImageConvert from './tools/ImageConvert'
 import ImagesToPdf from './tools/ImagesToPdf'
+import PdfImpose from './tools/PdfImpose'
 import PdfMerge from './tools/PdfMerge'
 import PdfPageNumbers from './tools/PdfPageNumbers'
 import PdfSplit from './tools/PdfSplit'
+import PdfToWord from './tools/PdfToWord'
 import WordToPdf from './tools/WordToPdf'
 
 type ToolItem = {
@@ -18,6 +20,7 @@ const GROUPS: { group: string; items: ToolItem[] }[] = [
     group: '格式转换',
     items: [
       { id: 'word2pdf', label: 'Word 转 PDF', icon: '📄', Comp: WordToPdf },
+      { id: 'pdf2word', label: 'PDF 转 Word', icon: '📝', Comp: PdfToWord },
       { id: 'img2pdf', label: '图片转 PDF', icon: '🖼️', Comp: ImagesToPdf },
       { id: 'imgconv', label: '图片格式转换', icon: '🔄', Comp: ImageConvert }
     ]
@@ -25,6 +28,7 @@ const GROUPS: { group: string; items: ToolItem[] }[] = [
   {
     group: 'PDF 处理',
     items: [
+      { id: 'impose', label: 'PDF 拼版', icon: '📐', Comp: PdfImpose },
       { id: 'merge', label: 'PDF 合并', icon: '🔗', Comp: PdfMerge },
       { id: 'split', label: 'PDF 拆分', icon: '✂️', Comp: PdfSplit },
       { id: 'pagenum', label: '批量加页码', icon: '🔢', Comp: PdfPageNumbers }
